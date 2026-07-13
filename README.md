@@ -4,6 +4,12 @@
 
 Which operational factors are associated with poor customer reviews, and how could a marketplace prioritize initiatives to improve customer experience and repeat purchasing?
 
+## Executive summary
+
+This project analyzes marketplace customer experience using the Olist dataset. The strongest risk factor associated with poor reviews is delivery delay. Late deliveries are linked to a sharp increase in low-review rates, while some product categories and sellers show elevated risk as secondary signals.
+
+The analysis suggests that logistics reliability should be the first operational priority. Category- and seller-level differences are useful diagnostic signals, while first-order experience quality may also be linked to future purchasing behavior.
+
 ## Project overview
 
 This project analyzes a public marketplace dataset to investigate how delivery performance, product category, and seller-level variation are associated with customer satisfaction. The analytical focus is on four business questions:
@@ -170,11 +176,29 @@ This view helps identify sellers with consistently poor customer outcomes and su
 
 ## Recommendations
 
-- Prioritize operational interventions that reduce delivery lateness, especially in cases where delays exceed 3 days, because dissatisfaction rises sharply across late-delivery buckets.
-- Investigate high-risk categories such as office furniture, fashion male clothing, fixed telephony, audio, and home confort to determine whether the issue is product quality, fulfillment quality, or customer expectation mismatch.
-- Consider proactive communication, compensation, or service recovery workflows for delayed orders, then evaluate their effect on review score and repeat purchase with a controlled experiment.
-- Use first-order experience metrics as an input to retention monitoring, especially for customers who leave low reviews on their first delivered purchase.
-- Use seller-level risk scoring as a secondary operational diagnostic to identify sellers with persistently high low-review rates and investigate whether the underlying issue is delivery performance, product quality, packaging, or post-purchase support.
+### Business recommendations by priority
+
+1. **Reduce delivery lateness first.** Delivery delay has the clearest association with poor reviews, especially once lateness exceeds 3 days.
+2. **Audit high-risk categories.** Categories such as office furniture, fashion male clothing, fixed telephony, audio, and home confort should be reviewed for product quality, packaging, and expectation-setting issues.
+3. **Use seller-level monitoring as a diagnostic layer.** Large differences in low-review rates can help identify seller groups that may require operational review or support.
+4. **Monitor first-order experience as a retention signal.** Even small repeat-purchase differences suggest that poor early experiences may weaken customer retention.
+
+## How I would extend this analysis
+
+- Add payment type, price, and freight value to test whether dissatisfaction is driven by value perception as well as delay.
+- Segment delivery performance by region to see whether the problem is concentrated geographically.
+- Build a simple predictive model for low review risk to quantify feature importance.
+- Measure time to repeat purchase instead of only presence of a subsequent order.
+- Test whether proactive communication reduces the impact of delay on review scores.
+
+## Data dictionary
+
+- `mart_order_fact`: one row per order, used as the main analytical mart.
+- `review_score`: customer review score on a 1-5 scale.
+- `is_low_review`: binary flag where 1 means review score <= 2.
+- `delivery_days`: delivered date minus purchase date.
+- `delivery_delay_days`: delivered date minus estimated delivery date.
+- `order_item_count`: number of items in the order.
 
 ## Visualizations
 
