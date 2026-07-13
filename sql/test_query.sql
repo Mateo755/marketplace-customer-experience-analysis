@@ -1,5 +1,5 @@
+# BUILDING TABLES, SCHEMA PHASE
 SHOW TABLES;
-
 
 SHOW GLOBAL VARIABLES LIKE 'local_infile';
 SET GLOBAL local_infile = 1;
@@ -23,3 +23,9 @@ SELECT 'category_translation', COUNT(*) FROM raw_category_translation;
 SELECT * FROM raw_orders LIMIT 5;
 SELECT * FROM raw_order_items LIMIT 5;
 SELECT * FROM raw_order_reviews LIMIT 5;
+
+# ------------------------------------------------------
+# Created view check
+SELECT *
+FROM mart_order_fact
+LIMIT 10;
