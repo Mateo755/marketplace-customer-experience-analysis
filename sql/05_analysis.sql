@@ -1,5 +1,9 @@
 USE olist_analytics;
 
+-- Baseline descriptive analyses (H1–H4).
+-- Extended robustness descriptors: see 06_extended_analysis.sql.
+-- Formal significance tests: notebooks/02_hypothesis_tests.ipynb.
+
 -- =========================================================
 -- Analysis 1: Overall scale of customer dissatisfaction
 -- Purpose:
