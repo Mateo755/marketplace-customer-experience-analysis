@@ -4,3 +4,5 @@ pymysql
 matplotlib
 seaborn
 jupyter
+scipy
+statsmodels
