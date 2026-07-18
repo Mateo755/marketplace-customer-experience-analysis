@@ -1,0 +1,7 @@
+freight_ratio_bucket,delivery_status,orders,low_review_rate_pct
+High freight ratio,Late,2617,55.14
+High freight ratio,On time or early,29327,9.71
+Low freight ratio,Late,2548,53.1
+Low freight ratio,On time or early,29389,8.71
+Mid freight ratio,Late,2496,53.69
+Mid freight ratio,On time or early,29447,9.14

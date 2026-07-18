@@ -1,0 +1,7 @@
+first_order_review_group,first_order_delivery_status,customers,customers_with_next_order,repeat_purchase_rate_pct
+Low review (1-2),Late,3754,91,2.42
+Low review (1-2),On time or early,6970,226,3.24
+Neutral review (3),Late,757,24,3.17
+Neutral review (3),On time or early,6097,192,3.15
+High review (4-5),Late,2042,65,3.18
+High review (4-5),On time or early,61081,2059,3.37

@@ -1,0 +1,10 @@
+hypothesis,question,test,statistic,p_value,trend_z,trend_p_value,effect_size,effect_label,significant_0_05,note
+H1,Delay bucket vs low review,Chi-square + Cochran-Armitage trend,17354.555,0.0,131.082,0.0,0.4256,Cramer's V,True,Strong monotonic deterioration with lateness
+H5,Customer state vs low review,Chi-square independence,710.176,5.535777530507246e-136,,,0.0862,Cramer's V,True,Regional differences exist; effect size is small vs delay
+H5b,Late vs low review within states (MH),Mantel-Haenszel,11479.747,0.0,,,11.28,Common OR (late),True,Delay effect persists after stratifying by state
+H6/H7,Freight-ratio tercile vs low review,Chi-square + Cochran-Armitage,20.838,2.986221520250079e-05,4.457,8.304110912904505e-06,0.0147,Cramer's V,True,Statistically detectable but much smaller than delay effect
+H8,Multi-item vs low review (MH by late),Chi-square + Mantel-Haenszel,1836.438,0.0,2403.789,0.0,2.875,OR (multi-item),True,Complexity associated with low reviews even after late strata
+H9,Category vs low review (on-time only),Chi-square (+ BH-FDR pairwise vs rest),824.541,3.649916476919109e-140,21.0,,0.0908,Cramer's V,True,On-time-only control for logistics; 21 categories differ from rest after FDR (overall on-time low-review 11.38%)
+H12,Seller vs low review (on-time orders),Chi-square,2100.316,5.0705798407153715e-222,,,0.1775,Cramer's V,True,Seller heterogeneity remains after restricting to on-time
+H10,First-review group vs repeat purchase,Chi-square,5.281,0.07131722795711969,,,0.409,Delta pp (High - Low),False,Effect is small in magnitude (High 3.36% vs Low 2.96%); treat as supplementary signal
+H11,Days to repurchase by first-review group,Kruskal-Wallis (+ Mann-Whitney Low vs High),25.222,3.335041730908302e-06,284412.0,6.220974097225579e-06,-0.1552,Cliff's delta (Low vs High),True,Among repeaters only; interpret cautiously — small practical retention signal relative to delivery delay

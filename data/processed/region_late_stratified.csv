@@ -1,0 +1,47 @@
+customer_state,delivery_status,orders,avg_review_score,low_review_rate_pct
+AL,Late,92,2.33,60.87
+AL,On time or early,302,4.32,8.94
+BA,Late,443,2.57,53.72
+BA,On time or early,2786,4.15,11.2
+CE,Late,194,2.2,63.4
+CE,On time or early,1079,4.26,8.8
+DF,Late,147,2.41,59.86
+DF,On time or early,1923,4.27,9.46
+ES,Late,234,2.73,50.0
+ES,On time or early,1735,4.26,8.88
+GO,Late,155,2.52,52.26
+GO,On time or early,1791,4.24,9.72
+MA,Late,137,2.4,58.39
+MA,On time or early,575,4.17,10.78
+MG,Late,622,2.67,49.84
+MG,On time or early,10663,4.28,9.48
+MS,Late,81,2.62,51.85
+MS,On time or early,618,4.36,8.25
+MT,Late,58,2.66,48.28
+MT,On time or early,821,4.25,10.23
+PA,Late,111,2.13,66.67
+PA,On time or early,822,4.15,11.31
+PB,Late,55,2.47,58.18
+PB,On time or early,457,4.27,9.63
+PE,Late,168,2.28,64.29
+PE,On time or early,1411,4.3,8.93
+PI,Late,75,2.44,57.33
+PI,On time or early,396,4.29,8.33
+PR,Late,241,2.92,43.98
+PR,On time or early,4659,4.31,9.12
+RJ,Late,1623,2.13,66.85
+RJ,On time or early,10588,4.25,10.85
+RN,Late,50,2.04,66.0
+RN,On time or early,421,4.4,6.65
+RO,Late,7,2.57,57.14
+RO,On time or early,235,4.21,10.64
+RS,Late,378,2.51,55.56
+RS,On time or early,4948,4.31,8.55
+SC,Late,339,2.62,51.62
+SC,On time or early,3180,4.29,8.9
+SE,Late,50,1.94,68.0
+SE,On time or early,284,4.25,10.21
+SP,Late,2349,2.91,44.57
+SP,On time or early,37917,4.33,8.54
+TO,Late,35,3.2,37.14
+TO,On time or early,238,4.29,8.4

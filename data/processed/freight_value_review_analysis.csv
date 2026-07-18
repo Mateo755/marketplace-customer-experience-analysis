@@ -1,0 +1,4 @@
+freight_ratio_tercile,freight_ratio_bucket,orders,avg_freight_ratio,avg_review_score,low_review_rate_pct
+1,Low freight ratio,31944,0.1,4.2,12.26
+2,Mid freight ratio,31944,0.228,4.16,12.62
+3,High freight ratio,31944,0.598,4.12,13.43

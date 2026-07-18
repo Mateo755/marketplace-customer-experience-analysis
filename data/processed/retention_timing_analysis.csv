@@ -1,0 +1,4 @@
+first_order_review_group,customers,customers_with_next_order,avg_days_to_next_order_among_repeaters,repeat_purchase_rate_pct
+Low review (1-2),10725,317,64.9,2.96
+Neutral review (3),6854,216,69.5,3.15
+High review (4-5),63127,2124,88.8,3.36

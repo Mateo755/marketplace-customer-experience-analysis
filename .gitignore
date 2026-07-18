@@ -10,7 +10,7 @@ venv/
 
 # Local data
 data/raw/*.csv
-data/processed/*.csv
+
 
 # Local configurations
 .DS_Store

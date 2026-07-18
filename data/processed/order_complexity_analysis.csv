@@ -1,0 +1,4 @@
+item_complexity,seller_complexity,orders,avg_review_score,low_review_rate_pct,late_delivery_rate_pct
+Multi-item,Multi-seller,1261,2.85,47.26,1.35
+Multi-item,Single-seller,8267,3.75,23.54,7.16
+Single-item,Single-seller,86304,4.21,11.23,8.17
