@@ -6,26 +6,26 @@ Which operational factors are associated with poor customer reviews, and how cou
 
 ## Executive summary
 
-This project analyzes marketplace customer experience using the Olist dataset. The strongest risk factor associated with poor reviews is delivery delay. Late deliveries are linked to a sharp increase in low-review rates, while some product categories and sellers show elevated risk as secondary signals.
+This project analyzes customer experience in the Olist marketplace dataset with a focus on operational drivers of poor reviews.
 
-The analysis suggests that logistics reliability should be the first operational priority. Category- and seller-level differences are useful diagnostic signals, while first-order experience quality may also be linked to future purchasing behavior.
+The strongest signal is delivery delay: low-review risk rises sharply as lateness increases. Extended checks show that this pattern persists after controlling for region, while category, order complexity, and seller-level differences act as secondary diagnostic signals. Retention effects after a poor first experience are directionally negative, but small and not strong enough to support a major business conclusion.
 
 ## Project overview
 
-This project analyzes a public marketplace dataset to investigate how delivery performance, product category, and seller-level variation are associated with customer satisfaction. The analytical focus is on four business questions:
+This project investigates how delivery performance, product category, and seller-level variation relate to customer satisfaction. The analytical focus is on four business questions:
 
 1. Does delivery delay correlate with a higher share of low review scores?
 2. Which product categories are associated with elevated customer dissatisfaction?
 3. Are customers less likely to place another order after a poor first experience?
 4. Which sellers show persistently elevated risk of poor customer outcomes?
 
-The project was built in MySQL 8 and Python, with a dedicated order-level analytical view used as the basis for downstream analysis. MySQL 8 supports window functions, which makes it suitable for customer-level sequence analysis such as first-order and repeat-purchase logic.
+Built in MySQL 8 and Python, with an order-level analytical view (`mart_order_fact`) as the basis for downstream analysis. MySQL 8 window functions support first-order and repeat-purchase logic.
 
 ## Dataset
 
-This project uses the **Brazilian E-Commerce Public Dataset by Olist**, a public marketplace dataset available on Kaggle. The dataset contains approximately 100,000 orders with information on customers, products, order items, delivery timestamps, and review scores.
+**Brazilian E-Commerce Public Dataset by Olist** (Kaggle): ~100,000 orders with customers, products, order items, delivery timestamps, and review scores.
 
-Required source files:
+Required source files in `data/raw/`:
 
 - `olist_orders_dataset.csv`
 - `olist_order_items_dataset.csv`
@@ -38,7 +38,7 @@ Required source files:
 
 - **Database:** MySQL 8
 - **SQL:** CTEs, multi-table joins, aggregations, window functions
-- **Python:** pandas, matplotlib, seaborn
+- **Python:** pandas, matplotlib, seaborn, scipy, statsmodels
 - **Environment:** Jupyter Notebook
 - **Version control:** Git, GitHub
 
@@ -51,165 +51,157 @@ marketplace-customer-experience-analysis/
 ├── .gitignore
 ├── data/
 │   ├── raw/
-│   ├── processed/
-│   └── README.md
-├── docs/
-│   └── methodology.md
+│   └── processed/
 ├── notebooks/
-│   └── 01_visualizations.ipynb
+│   ├── 01_visualizations.ipynb
+│   └── 02_hypothesis_tests.ipynb
+├── scripts/
+│   ├── export_extended_analysis.py
+│   └── run_hypothesis_tests.py
 ├── outputs/
-│   ├── delivery_delay_vs_reviews.jpg
-│   ├── category_low_review_risk.jpg
-│   ├── repeat_purchase_by_review.jpg
-│   └── seller_low_review_risk.jpg
 └── sql/
     ├── 00_create_database.sql
     ├── 01_create_tables.sql
     ├── 02_load_data.sql
     ├── 03_create_mart.sql
     ├── 04_quality_checks.sql
-    └── 05_analysis.sql
+    ├── 05_analysis.sql
+    └── 06_extended_analysis.sql
 ```
 
 ## Analytical approach
 
-The analysis was performed in the following order:
+1. Import raw CSVs into MySQL 8.
+2. Build order-level view `mart_order_fact`.
+3. Validate granularity, missing values, and delivery-time ranges.
+4. Run baseline analyses (delay, category, repeat purchase, seller risk).
+5. Export outputs and build charts in `notebooks/01_visualizations.ipynb`.
+6. Run extended robustness descriptors (`sql/06_extended_analysis.sql`) and formal hypothesis tests (`notebooks/02_hypothesis_tests.ipynb`).
 
-1. Imported raw CSV files into MySQL 8 tables.
-2. Created an order-level analytical view called `mart_order_fact`.
-3. Validated granularity, missing values, and delivery-time ranges.
-4. Analyzed the relationship between delivery delay and review score.
-5. Identified product categories with elevated low-review rates.
-6. Estimated repeat-purchase rate based on the review score of the customer’s first order.
-7. Added an optional seller-level diagnostic analysis for sellers with at least 50 delivered reviewed orders.
-8. Exported query outputs and built final visualizations in Python.
-
-The core analytical unit is a single order (`order_id`). This prevents row multiplication caused by joining order-level and item-level tables directly in downstream analysis.
+The analytical unit is one order (`order_id`), which avoids row multiplication from item-level joins.
 
 ## Data quality checks
 
-Before running the business analysis, the analytical view `mart_order_fact` was validated to confirm correct granularity and data coverage.
+Before business analysis, `mart_order_fact` was validated for granularity and coverage.
 
-- Verified that `mart_order_fact` contains exactly one row per order: **99,441 rows** and **99,441 unique `order_id` values**, with **0 duplicate rows**.
-- Checked order-status distribution and confirmed that the dataset is dominated by **delivered orders (96,478)**, with smaller volumes of shipped, canceled, unavailable, invoiced, processing, created, and approved orders.
-- Assessed missing values relevant to customer-experience analysis: **769 orders without review score**, **2,965 without delivery date**, and **775 without item-level data**.
-- Inspected delivery-time ranges and delivery-delay ranges before building delivery buckets.
-- Reviewed the distribution of review scores and confirmed that the dataset is strongly skewed toward high ratings, especially score 5.
+- Exactly one row per order: **99,441** rows and **99,441** unique `order_id` values (**0** duplicates).
+- Status mix dominated by **delivered** orders (**96,478**).
+- Missing values relevant to CX analysis: **769** without review score, **2,965** without delivery date, **775** without item-level data.
+- Delivery-time and delay ranges inspected before bucketing; review scores strongly skewed toward 5.
 
-For customer-experience analyses, the final population was restricted to **delivered orders with an available review score**.
+Analyses use **delivered orders with an available review score**.
 
 ## Key findings
 
-- Across **95,831 delivered orders with a review score**, the average review score was **4.16**, while the low-review rate (defined as score <= 2) was **12.77%**.
-- Delivery performance showed the strongest relationship with customer dissatisfaction. Orders delivered **on time or early** had an average review score of **4.29** and a low-review rate of **9.23%**, while orders delivered **8+ days late** had an average review score of **1.70** and a low-review rate of **79.18%**.
-- Intermediate delay buckets also showed a clear monotonic deterioration: **1-3 days late** orders had a low-review rate of **32.18%**, and **4-7 days late** orders reached **67.56%**.
-- The highest-risk product categories among categories with at least 100 reviewed delivered items were **office_furniture** (**25.42%** low-review rate), **fashion_male_clothing** (**25.00%**), **fixed_telephony** (**22.92%**), **audio** (**21.73%**), and **home_confort** (**19.77%**).
-- Customers whose first delivered reviewed order received a **low review (1-2)** had a repeat-purchase rate of **2.96%**, compared with **3.00%** for **neutral reviews (3)** and **3.36%** for **high reviews (4-5)**.
-- An additional seller-level analysis identified substantial variation in low-review rates among sellers with at least 50 delivered reviewed orders, ranging from **28.74%** to **63.49%**. This suggests that some seller-level operational or quality issues may contribute disproportionately to poor customer outcomes.
-- The repeat-purchase gap is smaller than the delivery-delay effect on reviews, but it still suggests that first-order experience quality is associated with future purchasing behavior.
+- **Delivery delay dominates.** On-time/early orders have a **9.23%** low-review rate vs **79.18%** for orders **8+ days late** (monotonic rise across delay buckets; Cramér’s V ≈ 0.43).
+- **Region does not explain delay away.** Late vs on-time low-review association persists within states (Mantel–Haenszel common OR ≈ 11.3).
+- **Category and seller risk remain after logistics controls.** High-risk categories and sellers still show elevated low-review rates on on-time orders (e.g. office furniture ≈ 22% on-time).
+- **Order complexity is a secondary operational signal.** Multi-item orders have substantially higher low-review risk (OR ≈ 2.9), including after late-delivery stratification.
+- **Retention is a weak signal.** First-order low vs high review differs by < **0.5 pp** in repeat-purchase rate (~3% absolute); H10 is not significant at α = 0.05.
+
+Details and full metrics: [`sql/05_analysis.sql`](sql/05_analysis.sql), [`sql/06_extended_analysis.sql`](sql/06_extended_analysis.sql), [`notebooks/02_hypothesis_tests.ipynb`](notebooks/02_hypothesis_tests.ipynb).
 
 ## Business interpretation
 
-The results suggest that **delivery delay is the clearest operational signal linked to customer dissatisfaction** in this dataset. The sharp increase in low-review rate as lateness grows indicates that logistics reliability is likely more important for customer experience than many category-level differences.
+**Delivery delay is the clearest operational lever** for customer dissatisfaction. Robustness checks support prioritizing logistics first: the late-delivery pattern holds inside regions, while freight-ratio effects are statistically detectable but tiny.
 
-Category-level variation still matters, especially in product groups such as office furniture, fixed telephony, and audio, where dissatisfaction rates are elevated even after filtering for minimum transaction volume. These categories may require deeper investigation into product quality, damage risk, packaging, or expectation setting.
+Category and seller diagnostics still matter once delivery is on time — pointing to product quality, packaging, or expectation setting. Multi-item / multi-seller complexity is a useful monitoring layer, with the caveat that reviews are order-level and attribution is imperfect.
 
-The repeat-purchase analysis suggests that a poor first experience is associated with lower follow-up purchasing. Although the absolute differences are modest, this finding supports the idea that customer experience metrics are not only service indicators, but also early signals of retention risk.
+First-order retention differences are directionally negative but too small to drive prioritization ahead of logistics.
 
-The seller-level analysis works best as an operational diagnostic layer rather than a definitive performance ranking. Large variation between sellers may reflect differences in fulfillment quality, packaging, or product expectations, but seller-level interpretation must remain cautious because reviews are attached to orders rather than isolated seller interactions.
+## What each analysis measures
 
-## Key analyses
+| Analysis | Measures |
+|---|---|
+| Delivery delay | Low-review rate and average score by delay bucket |
+| Product category | Low-review rate by category (min. volume filter) |
+| Repeat purchase | Repeat-purchase rate by first-order review group |
+| Seller risk | Low-review rate and late-delivery rate for sellers with ≥50 orders |
 
-### 1. Delivery delay vs. customer dissatisfaction
+## Extended hypotheses / robustness checks
 
-Orders were grouped into delivery-delay buckets:
+H1–H4 are baseline descriptive associations. H5–H12 check whether conclusions hold after operational controls:
 
-- On time or early
-- 1-3 days late
-- 4-7 days late
-- 8+ days late
+| Check | One-line takeaway |
+|---|---|
+| Region | Delay → low-review persists within states |
+| Freight-ratio terciles | Tiny effect vs delay; not a priority |
+| Order complexity | Multi-item risk remains after late strata |
+| Category on-time only | Product/category signal with logistics held constant |
+| Seller on-time | Seller heterogeneity remains without lateness |
+| Retention timing | Small magnitude; interpret cautiously |
 
-For each bucket, the analysis measured:
+SQL: [`sql/06_extended_analysis.sql`](sql/06_extended_analysis.sql).  
+Exports: [`data/processed/`](data/processed/) (`region_review_analysis.csv`, `freight_value_review_analysis.csv`, `order_complexity_analysis.csv`, `category_on_time_risk.csv`, `seller_on_time_risk.csv`, `retention_timing_analysis.csv`).
 
-- number of orders,
-- average review score,
-- low-review rate, defined as review score <= 2.
+## Hypothesis testing approach
 
-This analysis shows whether operational delivery performance is associated with worse customer outcomes.
+Formal tests in [`notebooks/02_hypothesis_tests.ipynb`](notebooks/02_hypothesis_tests.ipynb) (order-level data; α = 0.05). Tests are pre-specified by data type; effect size is reported alongside p-values.
 
-### 2. Product categories with elevated low-review rates
+| Hypothesis | Test | Effect size |
+|---|---|---|
+| H1 Delay bucket ↔ low-review | χ² + Cochran–Armitage | Cramér’s V ≈ 0.43 |
+| H5 State ↔ low-review | χ² | Cramér’s V ≈ 0.09 |
+| H5b Late ↔ low-review \| state | Mantel–Haenszel | Common OR ≈ 11.3 |
+| H6/H7 Freight-ratio tercile | χ² + Cochran–Armitage | Cramér’s V ≈ 0.015 |
+| H8 Multi-item ↔ low-review | χ² + Mantel–Haenszel by late | OR ≈ 2.9 |
+| H9 Category ↔ low-review (on-time) | χ² + BH-FDR (vs rest) | Cramér’s V ≈ 0.09 |
+| H12 Seller ↔ low-review (on-time) | χ² | Cramér’s V ≈ 0.18 |
+| H10 First review ↔ repeat purchase | χ² | Δ ≈ 0.41 pp (n.s. at 0.05) |
+| H11 Days to repurchase | Kruskal–Wallis / Mann–Whitney | Cliff’s δ ≈ −0.16 |
 
-Item-level data were joined with translated product categories and order-level review scores. Categories with small sample sizes were filtered out using a minimum-volume threshold to reduce unstable ranking effects.
-
-For each category, the analysis measured:
-
-- number of items in reviewed delivered orders,
-- average review score,
-- low-review rate.
-
-This makes it possible to identify which product areas may require deeper investigation into quality, packaging, expectation setting, or logistics.
-
-### 3. Repeat-purchase rate after the first customer experience
-
-Customer order history was analyzed using window functions in MySQL 8. For each customer, the first delivered reviewed order was identified, and the presence of a subsequent order was used to estimate repeat-purchase behavior.
-
-Customers were grouped by the review score of their first order:
-
-- Low review (1-2)
-- Neutral review (3)
-- High review (4-5)
-
-This analysis helps connect customer experience with future purchasing behavior.
-
-### 4. Seller-level low-review risk analysis
-
-As an additional diagnostic layer, the project also evaluates seller-level patterns among sellers with at least 50 delivered reviewed orders.
-
-For each seller, the analysis measures:
-
-- number of delivered reviewed orders,
-- average review score,
-- low-review rate,
-- late-delivery rate.
-
-This view helps identify sellers with consistently poor customer outcomes and supports operational prioritization. However, seller-level interpretation should remain cautious because review scores are assigned at the order level and may reflect multiple items or sellers within the same order.
+Audit table: [`data/processed/hypothesis_test_summary.csv`](data/processed/hypothesis_test_summary.csv).
 
 ## Recommendations
 
-### Business recommendations by priority
+1. **Reduce delivery lateness first** — largest effect size; persists within states; risk jumps sharply after 3+ days late.
+2. **Audit high-risk categories on on-time orders** — e.g. office furniture, fashion male clothing, fixed telephony.
+3. **Monitor complexity and seller on-time risk** as diagnostic layers for ops / quality programs.
+4. **Treat first-order retention as a weak secondary signal** — absolute repeat-purchase rates are ~3%.
 
-1. **Reduce delivery lateness first.** Delivery delay has the clearest association with poor reviews, especially once lateness exceeds 3 days.
-2. **Audit high-risk categories.** Categories such as office furniture, fashion male clothing, fixed telephony, audio, and home confort should be reviewed for product quality, packaging, and expectation-setting issues.
-3. **Use seller-level monitoring as a diagnostic layer.** Large differences in low-review rates can help identify seller groups that may require operational review or support.
-4. **Monitor first-order experience as a retention signal.** Even small repeat-purchase differences suggest that poor early experiences may weaken customer retention.
+## Future extensions
 
-## How I would extend this analysis
+Possible next steps beyond the current scope:
 
-- Add payment type, price, and freight value to test whether dissatisfaction is driven by value perception as well as delay.
-- Segment delivery performance by region to see whether the problem is concentrated geographically.
-- Build a simple predictive model for low review risk to quantify feature importance.
-- Measure time to repeat purchase instead of only presence of a subsequent order.
-- Test whether proactive communication reduces the impact of delay on review scores.
+1. Load payment data to test payment-type friction against low-review risk.
+2. Use geolocation to measure seller–customer distance as a driver of delay.
+3. Fit a simple low-review risk model to rank feature importance after the hypothesis layer.
 
 ## Data dictionary
 
-- `mart_order_fact`: one row per order, used as the main analytical mart.
-- `review_score`: customer review score on a 1-5 scale.
-- `is_low_review`: binary flag where 1 means review score <= 2.
-- `delivery_days`: delivered date minus purchase date.
-- `delivery_delay_days`: delivered date minus estimated delivery date.
-- `order_item_count`: number of items in the order.
+Columns in `mart_order_fact` (one row per `order_id`), matching [`sql/03_create_mart.sql`](sql/03_create_mart.sql):
+
+| Column | Description |
+|---|---|
+| `order_id` | Order identifier |
+| `customer_unique_id` | Persistent customer identifier |
+| `customer_state` | Customer state code |
+| `order_status` | Order status (e.g. delivered) |
+| `order_purchase_timestamp` | Purchase timestamp |
+| `order_delivered_customer_date` | Actual delivery timestamp |
+| `order_estimated_delivery_date` | Estimated delivery timestamp |
+| `item_count` | Number of items in the order |
+| `seller_count` | Number of distinct sellers in the order |
+| `item_revenue` | Sum of item prices |
+| `freight_revenue` | Sum of freight values |
+| `order_gmv` | `item_revenue` + `freight_revenue` |
+| `categories` | Distinct product categories in the order (comma-separated) |
+| `review_score` | Average review score for the order (1–5) |
+| `delivery_days` | Days from purchase to delivery |
+| `delivery_delay_days` | Days from estimated to actual delivery (negative = early) |
+| `is_late_delivery` | 1 if delivered after the estimate; else 0 (null if undelivered) |
+| `is_low_review` | 1 if `review_score` ≤ 2; else 0 (null if no review) |
 
 ## Visualizations
 
-The final notebook generates four business-oriented visualizations:
+Baseline charts from [`notebooks/01_visualizations.ipynb`](notebooks/01_visualizations.ipynb):
 
-1. **Low-review rate by delivery-delay bucket**
-2. **Categories with the highest low-review rate**
-3. **Repeat-purchase rate by first-order review group**
-4. **Sellers with the highest low-review rate**
+1. Low-review rate by delivery-delay bucket
+2. Categories with the highest low-review rate
+3. Repeat-purchase rate by first-order review group
+4. Sellers with the highest low-review rate
 
-These visual outputs are stored in the `outputs/` directory.
+Significance-annotated charts from [`notebooks/02_hypothesis_tests.ipynb`](notebooks/02_hypothesis_tests.ipynb): `outputs/h1_delay_significance.png`, `outputs/h6_freight_significance.png`, `outputs/h10_retention_significance.png`.
 
 ### Figures
 
@@ -223,32 +215,26 @@ These visual outputs are stored in the `outputs/` directory.
 
 ## Main SQL concepts demonstrated
 
-This project demonstrates practical SQL skills relevant to analytics work:
-
-- multi-table `JOIN`
-- Common Table Expressions (CTEs)
-- aggregations and grouped metrics
-- analytical filtering with `HAVING`
+- multi-table `JOIN`, CTEs, aggregations, `HAVING`
 - delivery-time calculations with date functions
-- window functions such as `ROW_NUMBER()` and `LEAD()`
-- construction of an order-level analytical layer for downstream analysis
-- seller-level diagnostic aggregation with operational risk metrics
+- window functions (`ROW_NUMBER()`, `LEAD()`)
+- order-level analytical mart for downstream analysis
+- seller-level and stratified robustness metrics (`06_extended_analysis.sql`)
 
 ## Limitations
 
-- The analysis is observational and identifies associations, not causal effects.
-- Not every order has a review score, which may introduce selection bias.
-- Review score is measured at the order level rather than the individual item level.
-- In multi-item or multi-seller contexts, review attribution is imperfect.
-- Seller-level results should be interpreted cautiously because a review score may reflect the combined experience of an order rather than the performance of a single seller.
-- The repeat-purchase analysis captures whether a later order exists, but not the time to repurchase or the full customer lifetime value.
-- The dataset represents a historical Brazilian marketplace and should not be generalized directly to another platform.
+- Observational associations only; significance tests do not establish causality.
+- Missing review scores may introduce selection bias.
+- Review score is order-level, not item-level; multi-item / multi-seller attribution is imperfect.
+- Repeat-purchase analysis uses a purchase-date cutoff; absolute rates are low, so small gaps are hard to detect.
+- Days-to-repurchase tests cover repeaters only (not a full survival model).
+- Historical Brazilian marketplace — do not generalize directly to another platform.
 
 ## Reproduction steps
 
-1. Download the required Olist dataset files from Kaggle.
-2. Place the required CSV files in `data/raw/`.
-3. Run SQL scripts in the following order:
+1. Download the Olist files from Kaggle into `data/raw/`.
+2. `pip install -r requirements.txt`
+3. Run SQL scripts in order:
 
 ```text
 00_create_database.sql
@@ -257,11 +243,25 @@ This project demonstrates practical SQL skills relevant to analytics work:
 03_create_mart.sql
 04_quality_checks.sql
 05_analysis.sql
+06_extended_analysis.sql
 ```
 
-4. Export analysis outputs to `data/processed/`.
-5. Run `notebooks/01_visualizations.ipynb` to generate final charts.
+4. Export extended descriptors (CSV path, no DB required):
+
+```text
+python scripts/export_extended_analysis.py
+```
+
+5. Run hypothesis tests:
+
+```text
+python scripts/run_hypothesis_tests.py
+```
+
+   Or open `notebooks/02_hypothesis_tests.ipynb` (defaults to raw CSVs; set `MYSQL_USER` / `MYSQL_PASSWORD` to query `mart_order_fact`).
+
+6. Run `notebooks/01_visualizations.ipynb` for baseline charts.
 
 ## Why this project matters
 
-This project was designed as a product/data analytics portfolio piece rather than a generic SQL exercise. It focuses on a realistic business problem, validates data quality before interpretation, and translates relational data into customer-experience insights and actionable marketplace recommendations.
+This is a product/data analytics portfolio piece, not a generic SQL exercise: a clear business question, data-quality validation before interpretation, robustness checks beyond raw correlations, and recommendations a marketplace could prioritize.
